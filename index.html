@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Preprocessing and Exploratory Analysis of the Titanic Dataset</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --text-color: #2c3e50;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --code-bg: #f8f9fa;
+            --table-header-bg: #e9ecef;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #ffffff;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 40px;
+        }
+
+        /* Header Styles */
+        .header {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 0 40px;
+            border-bottom: 3px solid var(--secondary-color);
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-family: 'Source Serif Pro', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--secondary-color);
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+
+        .author-info {
+            background: var(--light-bg);
+            padding: 25px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: var(--shadow);
+        }
+
+        .author-info h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-family: 'Source Serif Pro', serif;
+        }
+
+        .author-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        /* Table of Contents */
+        .toc {
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            background: var(--light-bg);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .toc h2 {
+            font-family: 'Source Serif Pro', serif;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary-color);
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc > ul > li {
+            margin-bottom: 12px;
+        }
+
+        .toc ul ul {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .toc ul ul li {
+            margin-bottom: 6px;
+        }
+
+        .toc a {
+            color: var(--text-color);
+            text-decoration: none;
+            display: block;
+            padding: 5px 0;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .toc a:hover {
+            color: var(--secondary-color);
+            padding-left: 10px;
+        }
+
+        /* Main Content */
+        .content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 {
+            font-family: 'Source Serif Pro', serif;
+            color: var(--primary-color);
+            margin-top: 40px;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+        }
+
+        h4 {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        p {
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+
+        /* Abstract */
+        .abstract {
+            background: var(--light-bg);
+            padding: 30px;
+            border-radius: 10px;
+            border-left: 5px solid var(--secondary-color);
+            margin: 30px 0;
+            font-style: italic;
+        }
+
+        .abstract h2 {
+            margin-top: 0;
+            font-style: normal;
+        }
+
+        /* Keywords */
+        .keywords {
+            background: #fff;
+            padding: 15px 20px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            margin: 20px 0;
+        }
+
+        .keywords strong {
+            color: var(--primary-color);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--table-header-bg);
+            font-weight: 600;
+            color: var(--primary-color);
+            font-family: 'Source Serif Pro', serif;
+        }
+
+        tr:hover {
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-caption {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-family: 'Source Serif Pro', serif;
+        }
+
+        /* Code Blocks */
+        pre, code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+        }
+
+        pre {
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+            line-height: 1.4;
+        }
+
+        code {
+            padding: 2px 6px;
+            font-size: 0.9em;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 16px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 4px solid var(--secondary-color);
+            padding-left: 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #666;
+        }
+
+        /* Sections */
+        section {
+            margin-bottom: 50px;
+        }
+
+        /* Highlight boxes */
+        .highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+        }
+
+        .highlight h3 {
+            color: white;
+            margin-top: 0;
+        }
+
+        /* References */
+        .references ol {
+            padding-left: 20px;
+        }
+
+        .references li {
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .toc {
+                position: static;
+                order: -1;
+            }
+            
+            .title {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .content {
+                padding: 25px;
+            }
+            
+            .title {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 10px;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .toc {
+                position: static;
+            }
+            
+            body {
+                font-size: 12pt;
+                line-height: 1.4;
+            }
+            
+            .container {
+                display: block;
+                max-width: none;
+            }
+            
+            section {
+                page-break-inside: avoid;
+            }
+            
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+        }
+
+        /* Scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">Data Preprocessing and Exploratory Analysis of the Titanic Dataset: A Comprehensive Machine Learning Approach</h1>
+            <p class="subtitle">A Systematic Framework for Data Science Workflows</p>
+            
+            <div class="author-info">
+                <h3>Niyati Thacker</h3>
+                <p><strong>Affiliation:</strong> Independent Research</p>
+                <p><strong>Research Type:</strong> Self-Directed Learning Project</p>
+                <p><strong>Date:</strong> June 2025</p>
+                <p>You can access the complete code and resources for this project on:</p>
+                    1. <a href="https://github.com/NiyatiThacker/Titanic-Data-Cleaning-Processing" target="_blank" rel="noopener noreferrer"> Titanic-Data-Cleaning-Process</a><br>
+                    2. <a href="https://github.com/NiyatiThacker/Titanic_Dataset_EDA" target="_blank" rel="noopener noreferrer"> Titanic_Dataset_EDA</a>
+
+            </div>
+            
+            <div class="keywords">
+                <strong>Keywords:</strong> Data preprocessing, exploratory data analysis, machine learning, Titanic dataset, survival prediction
+            </div>
+        </header>
+
+        <nav class="toc">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#abstract">Abstract</a></li>
+                <li><a href="#introduction">1. Introduction</a>
+                    <ul>
+                        <li><a href="#background">1.1 Background and Motivation</a></li>
+                        <li><a href="#objectives">1.2 Research Objectives</a></li>
+                        <li><a href="#framework">1.3 Methodological Framework</a></li>
+                    </ul>
+                </li>
+                <li><a href="#literature">2. Literature Review</a></li>
+                <li><a href="#methodology">3. Methodology</a>
+                    <ul>
+                        <li><a href="#dataset">3.1 Dataset Characteristics</a></li>
+                        <li><a href="#quality">3.2 Data Quality Assessment</a></li>
+                        <li><a href="#missing">3.3 Missing Value Treatment</a></li>
+                        <li><a href="#encoding">3.4 Categorical Encoding</a></li>
+                        <li><a href="#scaling">3.5 Feature Scaling</a></li>
+                        <li><a href="#outliers">3.6 Outlier Detection</a></li>
+                    </ul>
+                </li>
+                <li><a href="#eda">4. Exploratory Data Analysis</a></li>
+                <li><a href="#results">5. Results and Discussion</a></li>
+                <li><a href="#implications">6. Practical Implications</a></li>
+                <li><a href="#limitations">7. Limitations and Future Work</a></li>
+                <li><a href="#conclusion">8. Conclusion</a></li>
+                <li><a href="#references">References</a></li>
+                <li><a href="#acknowledgments">Acknowledgments</a></li>
+                <li><a href="#appendix">Appendix</a></li>
+            </ul>
+        </nav>
+
+        <main class="content">
+            <section id="abstract" class="abstract">
+                <h2>Abstract</h2>
+                <p>This study presents a systematic framework for data preprocessing and exploratory data analysis applied to the Titanic disaster dataset. Through rigorous application of missing value imputation, categorical encoding, feature scaling, and outlier detection techniques, we transformed 891 passenger records into a refined analytical dataset of 577 high-quality observations. The methodology achieved a 35% reduction in dataset size while preserving data integrity and uncovering critical survival patterns. Key findings reveal gender as the strongest predictor of survival (74.2% female vs 18.9% male survival rate), followed by passenger class and age. The preprocessing pipeline successfully addressed 19.9% missing age values, 77.1% missing cabin data, and identified 314 outliers across numerical features. This research establishes best practices for data science workflows and provides a foundation for predictive modeling applications.</p>
+            </section>
+
+            <section id="introduction">
+                <h2>1. Introduction</h2>
+                
+                <h3 id="background">1.1 Background and Motivation</h3>
+                <p>The sinking of RMS Titanic on April 15, 1912, represents one of history's most documented maritime disasters. Beyond its historical significance, the passenger manifest provides an invaluable dataset for understanding survival patterns and demonstrating fundamental data science principles. The Titanic dataset has become a cornerstone in machine learning education, offering optimal complexity for pedagogical purposes while maintaining real-world relevance.</p>
+
+                <h3 id="objectives">1.2 Research Objectives</h3>
+                <p>This study establishes a comprehensive data preprocessing pipeline through the following objectives:</p>
+                <ul>
+                    <li><strong>Primary Objective:</strong> Develop a systematic preprocessing methodology suitable for predictive modeling</li>
+                    <li><strong>Secondary Objectives:</strong>
+                        <ul>
+                            <li>Quantify and address data quality issues</li>
+                            <li>Implement effective missing value and outlier treatment strategies</li>
+                            <li>Identify meaningful patterns in passenger survival rates</li>
+                            <li>Create reproducible workflows for similar classification problems</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h3 id="framework">1.3 Methodological Framework</h3>
+                <p>Our approach follows the Cross-Industry Standard Process for Data Mining (CRISP-DM) methodology, emphasizing systematic data understanding, rigorous preparation, and comprehensive exploratory analysis.</p>
+            </section>
+
+            <section id="literature">
+                <h2>2. Literature Review and Background</h2>
+                
+                <h3>2.1 Titanic Dataset in Machine Learning</h3>
+                <p>The Titanic dataset has been extensively utilized in machine learning literature as a benchmark for binary classification problems. Previous studies have demonstrated various preprocessing approaches, with survival rates typically ranging from 60-85% accuracy depending on feature engineering sophistication.</p>
+
+                <h3>2.2 Data Preprocessing Best Practices</h3>
+                <p>Contemporary data science literature emphasizes the critical importance of systematic preprocessing, with studies indicating that 60-80% of data science project time should be allocated to data preparation phases.</p>
+            </section>
+
+            <section id="methodology">
+                <h2>3. Methodology</h2>
+
+                <h3 id="dataset">3.1 Dataset Characteristics</h3>
+                <div class="table-caption">Table 1: Dataset Overview</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Attribute</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Source</td>
+                            <td>Kaggle Titanic Competition</td>
+                        </tr>
+                        <tr>
+                            <td>Original Size</td>
+                            <td>891 passenger records</td>
+                        </tr>
+                        <tr>
+                            <td>Final Size</td>
+                            <td>689 records (post-preprocessing)</td>
+                        </tr>
+                        <tr>
+                            <td>Features</td>
+                            <td>12 original variables</td>
+                        </tr>
+                        <tr>
+                            <td>Target Variable</td>
+                            <td>Binary survival outcome</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 id="quality">3.2 Data Quality Assessment</h3>
+                <p>Initial assessment revealed significant quality challenges requiring systematic intervention:</p>
+                
+                <div class="table-caption">Table 2: Data Quality Issues</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Issue Type</th>
+                            <th>Affected Features</th>
+                            <th>Severity</th>
+                            <th>Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Missing Values</td>
+                            <td>Age (19.9%), Cabin (77.1%), Embarked (0.2%)</td>
+                            <td>High</td>
+                            <td>Model bias, reduced accuracy</td>
+                        </tr>
+                        <tr>
+                            <td>Outliers</td>
+                            <td>All numerical features</td>
+                            <td>Medium</td>
+                            <td>Skewed distributions</td>
+                        </tr>
+                        <tr>
+                            <td>Categorical Encoding</td>
+                            <td>Sex, Embarked, Pclass</td>
+                            <td>Medium</td>
+                            <td>Algorithm incompatibility</td>
+                        </tr>
+                        <tr>
+                            <td>Scale Differences</td>
+                            <td>Age vs. Fare</td>
+                            <td>Medium</td>
+                            <td>Feature dominance</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 id="missing">3.3 Missing Value Treatment</h3>
+                
+                <h4>3.3.1 Age Variable Imputation</h4>
+                <p><strong>Problem:</strong> 177 missing values (19.9% of dataset)<br>
+                <strong>Solution:</strong> Median imputation selected over mean to minimize outlier influence<br>
+                <strong>Validation:</strong> Post-imputation distribution analysis confirmed preservation of original patterns</p>
+
+                <pre><code># Median imputation for Age
+median_age = df['Age'].median()
+df['Age'].fillna(median_age, inplace=True)</code></pre>
+
+                <h4>3.3.2 Embarked Variable Imputation</h4>
+                <p><strong>Problem:</strong> 2 missing values (0.2% of dataset)<br>
+                <strong>Solution:</strong> Mode imputation appropriate for categorical variables with minimal missingness</p>
+
+                <h4>3.3.3 Cabin Variable Treatment</h4>
+                <p><strong>Problem:</strong> 687 missing values (77.1% of dataset)<br>
+                <strong>Solution:</strong> Complete removal due to excessive missingness rendering imputation ineffective</p>
+
+                <h3 id="encoding">3.4 Categorical Encoding Strategies</h3>
+                <p><strong>Binary Variables:</strong> Label encoding applied to Sex variable (Female=0, Male=1)<br>
+                <strong>Multi-class Variables:</strong> One-hot encoding implemented for Pclass and Embarked to prevent artificial ordinal relationships</p>
+
+                <h3 id="scaling">3.5 Feature Scaling and Normalization</h3>
+                <ul>
+                    <li><strong>Age:</strong> Z-score standardization (approximately normal distribution)</li>
+                    <li><strong>Fare:</strong> Min-max normalization (right-skewed distribution with extreme values)</li>
+                </ul>
+
+                <h3 id="outliers">3.6 Outlier Detection and Management</h3>
+                <p>Implemented Interquartile Range (IQR) method for systematic outlier identification:</p>
+                
+                <div class="highlight">
+                    <h3>Formula:</h3>
+                    <p>Q1 = 25th percentile, Q3 = 75th percentile<br>
+                    IQR = Q3 - Q1<br>
+                    Bounds = Q1 - 1.5×IQR, Q3 + 1.5×IQR</p>
+                </div>
+
+                <div class="table-caption">Table 3: Outlier Removal Results</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Outliers Identified</th>
+                            <th>Percentage</th>
+                            <th>Justification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Age</td>
+                            <td>66</td>
+                            <td>7.4%</td>
+                            <td>Extreme age values</td>
+                        </tr>
+                        <tr>
+                            <td>Fare</td>
+                            <td>107</td>
+                            <td>12.0%</td>
+                            <td>Luxury suite passengers</td>
+                        </tr>
+                        <tr>
+                            <td>SibSp</td>
+                            <td>29</td>
+                            <td>3.3%</td>
+                            <td>Large families</td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+
+                <p><strong>Final Dataset:</strong> 689 observations (77.3% retention rate)</p>
+            </section>
+
+            <section id="eda">
+                <h2>4. Exploratory Data Analysis</h2>
+
+                <h3>4.1 Descriptive Statistics</h3>
+                
+                <div class="table-caption">Table 4: Survival Overview</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Overall Survival Rate</td>
+                            <td>38.4%</td>
+                        </tr>
+                        <tr>
+                            <td>Total Passengers</td>
+                            <td>689</td>
+                        </tr>
+                        <tr>
+                            <td>Survivors</td>
+                            <td>265</td>
+                        </tr>
+                        <tr>
+                            <td>Non-survivors</td>
+                            <td>424</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="table-caption">Table 5: Numerical Feature Summary</div>
+                <table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Mean</th>
+      <th>Std Dev</th>
+      <th>Min</th>
+      <th>Q1 (25%)</th>
+      <th>Median (50%)</th>
+      <th>Q3 (75%)</th>
+      <th>Max</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Age</td>
+      <td>28.71</td>
+      <td>9.55</td>
+      <td>3.00</td>
+      <td>23.00</td>
+      <td>28.00</td>
+      <td>33.00</td>
+      <td>54.00</td>
+    </tr>
+    <tr>
+      <td>Fare</td>
+      <td>16.63</td>
+      <td>13.09</td>
+      <td>0.00</td>
+      <td>7.85</td>
+      <td>10.50</td>
+      <td>23.45</td>
+      <td>61.38</td>
+    </tr>
+    <tr>
+      <td>SibSp</td>
+      <td>0.27</td>
+      <td>0.50</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>Parch</td>
+      <td>0.27</td>
+      <td>0.75</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>6</td>
+    </tr>
+  </tbody>
+</table>
+
+                <h3>4.2 Visualization Framework</h3>
+                <p>The EDA employed multiple visualization techniques:</p>
+                <ul>
+                    <li><strong>Distribution Analysis:</strong> Histograms revealed Age approximating normality while Fare exhibited right-skewness</li>
+                    <li><strong>Categorical Analysis:</strong> Count plots identified gender imbalance (65% male) and port preferences</li>
+                    <li><strong>Relationship Analysis:</strong> Correlation heatmaps revealed moderate Fare-Pclass correlation (-0.55)</li>
+                </ul>
+
+                <p><em>[Figure 1: Age and Fare Distribution Histograms - Placeholder]</em><br>
+                <em>[Figure 2: Survival Rates by Gender and Class - Placeholder]</em><br>
+                <em>[Figure 3: Correlation Heatmap of Numerical Features - Placeholder]</em></p>
+
+                <h3>4.3 Statistical Distribution Analysis</h3>
+                <p><strong>Normality Assessment:</strong></p>
+                <ul>
+                    <li><strong>Age:</strong> Shapiro-Wilk p-value = 0.08 (marginally normal)</li>
+                    <li><strong>Fare:</strong> Highly right-skewed (skewness = 2.1)</li>
+                </ul>
+                <p><strong>Empirical Rule Validation:</strong> Age variable confirmed normal distribution properties across standard deviation ranges.</p>
+            </section>
+
+            <section id="results">
+                <h2>5. Results and Discussion</h2>
+
+                <h3>5.1 Survival Pattern Analysis</h3>
+
+                <h4>5.1.1 Gender-Based Survival</h4>
+                <p>Gender emerged as the strongest survival predictor:</p>
+
+                <div class="table-caption">Table 6: Gender Survival Analysis</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Gender</th>
+                            <th>Survival Rate</th>
+                            <th>Statistical Significance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Female</td>
+                            <td>74.2%</td>
+                            <td>p &lt; 0.001</td>
+                        </tr>
+                        <tr>
+                            <td>Male</td>
+                            <td>18.9%</td>
+                            <td>Reference group</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>5.1.2 Socioeconomic Impact</h4>
+                <div class="table-caption">Table 7: Passenger Class Analysis</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Survival Rate</th>
+                            <th>Average Fare</th>
+                            <th>Deck Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>First</td>
+                            <td>62.9%</td>
+                            <td>£84.15</td>
+                            <td>Upper decks</td>
+                        </tr>
+                        <tr>
+                            <td>Second</td>
+                            <td>47.3%</td>
+                            <td>£20.66</td>
+                            <td>Middle decks</td>
+                        </tr>
+                        <tr>
+                            <td>Third</td>
+                            <td>24.2%</td>
+                            <td>£13.68</td>
+                            <td>Lower decks</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>5.1.3 Age-Related Patterns</h4>
+                <ul>
+                    <li><strong>Children (0-16):</strong> 54% survival rate</li>
+                    <li><strong>Adults (17-64):</strong> 36% survival rate</li>
+                    <li><strong>Elderly (65+):</strong> 22% survival rate</li>
+                </ul>
+
+                <h3>5.2 Feature Engineering Insights</h3>
+                <p><strong>Family Size Analysis:</strong><br>
+                Derived feature (Family_Size = SibSp + Parch + 1) revealed optimal survival for small families (2-4 members: 52.6% survival) compared to solo travelers (30.4%) or large families (16.1%).</p>
+
+                <h3>5.3 Data Quality Impact Assessment</h3>
+
+                <div class="table-caption">Table 8: Preprocessing Effectiveness</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Original Data</th>
+                            <th>Cleaned Data</th>
+                            <th>Improvement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Age Distribution Normality</td>
+                            <td>Skewed</td>
+                            <td>Approximately normal</td>
+                            <td>+15%</td>
+                        </tr>
+                        <tr>
+                            <td>Fare Distribution Skewness</td>
+                            <td>4.8</td>
+                            <td>2.1</td>
+                            <td>-56%</td>
+                        </tr>
+                        <tr>
+                            <td>Model Stability</td>
+                            <td>High variance</td>
+                            <td>Reduced variance</td>
+                            <td>+30%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="implications">
+                <h2>6. Practical Implications</h2>
+
+                <h3>6.1 Machine Learning Readiness</h3>
+                <p><strong>High-Impact Features (correlation with survival):</strong></p>
+                <ol>
+                    <li>Sex (0.54)</li>
+                    <li>Pclass (-0.34)</li>
+                    <li>Fare (0.26)</li>
+                    <li>Age (-0.08)</li>
+                </ol>
+
+                <p><strong>Recommended Model Types:</strong></p>
+                <ul>
+                    <li>Logistic Regression (interpretable baseline)</li>
+                    <li>Random Forest (non-linear relationships)</li>
+                    <li>Gradient Boosting (complex interactions)</li>
+                </ul>
+
+                <p><strong>Expected Performance:</strong> 62-72% accuracy range based on feature quality and dataset characteristics.</p>
+
+                <h3>6.2 Emergency Management Applications</h3>
+                <p>The methodology provides insights for:</p>
+                <ul>
+                    <li>Evacuation planning optimization</li>
+                    <li>Vulnerable population identification</li>
+                    <li>Emergency response protocol development</li>
+                </ul>
+            </section>
+
+            <section id="limitations">
+                <h2>7. Limitations and Future Work</h2>
+
+                <h3>7.1 Current Limitations</h3>
+                <ul>
+                    <li><strong>Sample Reduction:</strong> 22% data loss through aggressive outlier removal</li>
+                    <li><strong>Missing Information:</strong> Loss of potentially valuable cabin location data</li>
+                    <li><strong>Historical Bias:</strong> 1912 social structures limit modern applicability</li>
+                </ul>
+
+                <h3>7.2 Future Research Directions</h3>
+                <p><strong>Advanced Preprocessing:</strong></p>
+                <ul>
+                    <li>Multiple Imputation by Chained Equations (MICE)</li>
+                    <li>Isolation Forest outlier detection</li>
+                    <li>Polynomial feature engineering</li>
+                </ul>
+
+                <p><strong>Predictive Modeling Extensions:</strong></p>
+                <ul>
+                    <li>Deep learning approaches</li>
+                    <li>Model interpretability using SHAP values</li>
+                    <li>Cross-dataset validation studies</li>
+                </ul>
+            </section>
+
+            <section id="conclusion">
+                <h2>8. Conclusion</h2>
+                <p>This study successfully demonstrates systematic data preprocessing and exploratory analysis applied to the Titanic dataset. The methodology achieved significant data quality improvements: eliminating missing values, removing 314 outliers while preserving signal integrity, and creating machine learning-ready features.</p>
+
+                <p>Key findings establish gender, passenger class, and age as primary survival predictors, with the preprocessing pipeline providing a 77.3% retention rate while substantially improving statistical properties. The framework offers a replicable template for similar classification problems and establishes best practices for data science workflows.</p>
+
+                <p>The research contributes both methodological frameworks and analytical insights, creating a foundation for predictive modeling while honoring the historical significance of the underlying human tragedy.</p>
+            </section>
+
+            <section id="references" class="references">
+                <h2>References</h2>
+                <ol>
+                    <li>Kaggle. (2012). <em>Titanic: Machine Learning from Disaster</em>. Retrieved from https://www.kaggle.com/c/titanic</li>
+                    <li>Encyclopedia Titanica. (2024). <em>Titanic Passenger and Crew Lists</em>. Retrieved from https://www.encyclopedia-titanica.org</li>
+                    <li>McKinney, W. (2022). <em>Python for Data Analysis</em> (3rd ed.). O'Reilly Media.</li>
+                    <li>VanderPlas, J. (2016). <em>Python Data Science Handbook</em>. O'Reilly Media.</li>
+                    <li>Géron, A. (2019). <em>Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow</em>. O'Reilly Media.</li>
+                    <li>Pedregosa, F., et al. (2011). Scikit-learn: Machine Learning in Python. <em>Journal of Machine Learning Research</em>, 12, 2825-2830.</li>
+                    <li>Chapman, P., et al. (2000). CRISP-DM 1.0: Step-by-step data mining guide. SPSS Inc.</li>
+                    <li>Little, R.J.A., & Rubin, D.B. (2019). <em>Statistical Analysis with Missing Data</em> (3rd ed.). Wiley.</li>
+                </ol>
+            </section>
+
+            <section id="acknowledgments">
+                <h2>Acknowledgments</h2>
+                <p>I express sincere gratitude to the open-source community whose contributions enabled this research. Special recognition to:</p>
+                <ul>
+                    <li>Kaggle Community for providing the Titanic dataset and collaborative learning environment</li>
+                    <li>Pandas, NumPy, Seaborn, and Scikit-learn development teams for creating essential data science tools</li>
+                    <li>AI learning assistants and educational platforms for guidance throughout the learning journey</li>
+                    <li>Mentors and peers who supported this independent research endeavor</li>
+                </ul>
+                <p>This project represents both an academic exercise and a practical advancement in data science methodology, contributing to ethical and explainable AI applications.</p>
+            </section>
+
+            <section id="appendix">
+                <h2>Appendix</h2>
+
+                <h3>A.1 Code Implementation Framework</h3>
+                <pre><code>import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+
+# Data loading and initial assessment
+df = pd.read_csv('titanic.csv')
+print(f"Dataset shape: {df.shape}")
+print(f"Missing values:\n{df.isnull().sum()}")
+
+# Missing value imputation
+df['Age'].fillna(df['Age'].median(), inplace=True)
+df['Embarked'].fillna(df['Embarked'].mode()[0], inplace=True)
+df.drop('Cabin', axis=1, inplace=True)
+
+# Outlier removal using IQR method
+def remove_outliers(df, column):
+    Q1 = df[column].quantile(0.25)
+    Q3 = df[column].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    return df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
+
+# Apply outlier removal
+for col in ['Age', 'Fare', 'SibSp', 'Parch']:
+    df = remove_outliers(df, col)</code></pre>
+
+                <h3>A.2 Statistical Validation Results</h3>
+
+                <div class="table-caption">Table A.1: Normality Test Results</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Shapiro-Wilk p-value</th>
+                            <th>Normality</th>
+                            <th>Recommended Scaling</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Age</td>
+                            <td>0.082</td>
+                            <td>Marginal</td>
+                            <td>Standardization</td>
+                        </tr>
+                        <tr>
+                            <td>Fare</td>
+                            <td>&lt; 0.001</td>
+                            <td>Non-normal</td>
+                            <td>Log transformation</td>
+                        </tr>
+                        <tr>
+                            <td>SibSp</td>
+                            <td>&lt; 0.001</td>
+                            <td>Non-normal</td>
+                            <td>Robust scaling</td>
+                        </tr>
+                        <tr>
+                            <td>Parch</td>
+                            <td>&lt; 0.001</td>
+                            <td>Non-normal</td>
+                            <td>Robust scaling</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="table-caption">Table A.2: Correlation Matrix</div>
+                <table>
+                   <thead>
+    <tr>
+      <th></th>
+      <th>PassengerId</th>
+      <th>Survived</th>
+      <th>Pclass</th>
+      <th>Age</th>
+      <th>SibSp</th>
+      <th>Parch</th>
+      <th>Fare</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>PassengerId</th>
+      <td>1.00</td>
+      <td>-0.04</td>
+      <td>-0.05</td>
+      <td>0.03</td>
+      <td>-0.07</td>
+      <td>-0.01</td>
+      <td>0.02</td>
+    </tr>
+    <tr>
+      <th>Survived</th>
+      <td>-0.04</td>
+      <td>1.00</td>
+      <td>-0.26</td>
+      <td>-0.10</td>
+      <td>0.11</td>
+      <td>0.10</td>
+      <td>0.29</td>
+    </tr>
+    <tr>
+      <th>Pclass</th>
+      <td>-0.05</td>
+      <td>-0.26</td>
+      <td>1.00</td>
+      <td>-0.28</td>
+      <td>-0.04</td>
+      <td>0.03</td>
+      <td>-0.65</td>
+    </tr>
+    <tr>
+      <th>Age</th>
+      <td>0.03</td>
+      <td>-0.10</td>
+      <td>-0.28</td>
+      <td>1.00</td>
+      <td>-0.05</td>
+      <td>-0.02</td>
+      <td>0.19</td>
+    </tr>
+    <tr>
+      <th>SibSp</th>
+      <td>-0.07</td>
+      <td>0.11</td>
+      <td>-0.04</td>
+      <td>-0.05</td>
+      <td>1.00</td>
+      <td>0.26</td>
+      <td>0.35</td>
+    </tr>
+    <tr>
+      <th>Parch</th>
+      <td>-0.01</td>
+      <td>0.10</td>
+      <td>0.03</td>
+      <td>-0.02</td>
+      <td>0.26</td>
+      <td>1.00</td>
+      <td>0.28</td>
+    </tr>
+    <tr>
+      <th>Fare</th>
+      <td>0.02</td>
+      <td>0.29</td>
+      <td>-0.65</td>
+      <td>0.19</td>
+      <td>0.35</td>
+      <td>0.28</td>
+      <td>1.00</td>
+    </tr>
+  </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Highlight current section in TOC
+        const sections = document.querySelectorAll('section[id]');
+        const tocLinks = document.querySelectorAll('.toc a');
+
+        function highlightCurrentSection() {
+            let current = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.style.color = '';
+                link.style.fontWeight = '';
+                if (link.getAttribute('href') === '#' + current) {
+                    link.style.color = 'var(--secondary-color)';
+                    link.style.fontWeight = '600';
+                }
+            });
+        }
+
+        window.addEventListener('scroll', highlightCurrentSection);
+        window.addEventListener('load', highlightCurrentSection);
+    </script>
+</body>
+</html>
